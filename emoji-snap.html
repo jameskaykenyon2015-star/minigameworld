@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emoji Snap (2 Player)</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(130deg,
+        #6a00f4 0%,
+        #ff006e 25%,
+        #00f5d4 50%,
+        #3a86ff 75%,
+        #ffbe0b 100%);
+      background-size: 300% 300%;
+      animation: neonShift 12s ease-in-out infinite;
+      color: #fff;
+    }
+    @keyframes neonShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .game {
+      text-align: center;
+      padding: 40px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 40px rgba(255,255,255,0.3);
+      width: min(800px, 95vw);
+      position: relative;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(255,255,255,0.6);
+    }
+
+    .player {
+      position: absolute;
+      top: 10px;
+      font-size: 1rem;
+      background: rgba(255,255,255,0.1);
+      padding: 10px 16px;
+      border-radius: 12px;
+      box-shadow: 0 0 20px rgba(255,255,255,0.3);
+    }
+    .player1 { right: 10px; }
+    .player2 { left: 10px; }
+
+    .deck-area {
+      display: flex;
+      justify-content: space-around;
+      margin: 30px 0;
+    }
+
+    .deck, .pile {
+      font-size: 4rem;
+      padding: 20px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.1);
+      box-shadow: 0 0 20px rgba(255,255,255,0.4);
+      text-shadow: 0 0 20px rgba(255,255,255,0.6);
+      min-width: 80px;
+    }
+
+    button {
+      padding: 14px 24px;
+      border-radius: 12px;
+      border: none;
+      color: #0e0f13;
+      background: linear-gradient(120deg, #00ffd0, #6eff7e);
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: 0 12px 26px rgba(0,255,208,0.35);
+      transition: transform 0.1s ease, filter 0.2s ease;
+      margin: 10px;
+    }
+    button:hover { filter: brightness(1.1); }
+    button:active { transform: scale(0.97); }
+
+    #snapText {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 5rem;
+      font-weight: bold;
+      color: #ff006e;
+      text-shadow: 0 0 40px #fff;
+      display: none;
+    }
+
+    .controls {
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game">
+    <h1>🎯 Emoji Snap (2 Player)</h1>
+
+    <!-- Player panels -->
+    <div class="player player1">Player 1<br>Score: <span id="score1">0</span></div>
+    <div class="player player2">Player 2<br>Score: <span id="score2">0</span></div>
+
+    <!-- Decks and pile -->
+    <div class="deck-area">
+      <div>
+        <div id="deck1" class="deck">❓</div>
+        <button id="play1">Play Card</button>
+      </div>
+      <div id="pile" class="pile">⬜</div>
+      <div>
+        <div id="deck2" class="deck">❓</div>
+        <button id="play2">Play Card</button>
+      </div>
+    </div>
+
+    <div id="snapText">SNAP!</div>
+
+    <!-- Controls -->
+    <div class="controls">
+      <button id="restartBtn">Restart Game</button>
+      <a href="index.html"><button>Back to Hub</button></a>
+    </div>
+  </div>
+
+  <script>
+    const emojis = ["😀","😎","🤩","😡","😭","😱","😍","🤖","👻","🐶","🐱","🐵","🐸","🐼"];
+
+    let deck1 = [], deck2 = [];
+    let pile = [];
+
+    let score1 = 0, score2 = 0;
+
+    const deck1El = document.getElementById("deck1");
+    const deck2El = document.getElementById("deck2");
+    const pileEl = document.getElementById("pile");
+    const score1El = document.getElementById("score1");
+    const score2El = document.getElementById("score2");
+    const snapText = document.getElementById("snapText");
+
+    function shuffle(arr) {
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function initGame() {
+      let fullDeck = shuffle([...emojis, ...emojis]); // duplicate for two players
+      deck1 = fullDeck.slice(0, fullDeck.length/2);
+      deck2 = fullDeck.slice(fullDeck.length/2);
+      pile = [];
+      score1 = 0;
+      score2 = 0;
+      updateUI();
+    }
+
+    function updateUI() {
+      deck1El.textContent = deck1.length ? deck1[0] : "❌";
+      deck2El.textContent = deck2.length ? deck2[0] : "❌";
+      pileEl.textContent = pile.length ? pile[pile.length-1] : "⬜";
+      score1El.textContent = score1;
+      score2El.textContent = score2;
+    }
+
+    function playCard(player) {
+      let card;
+      if (player === 1 && deck1.length) {
+        card = deck1.shift();
+      } else if (player === 2 && deck2.length) {
+        card = deck2.shift();
+      } else {
+        return;
+      }
+      pile.push(card);
+      updateUI();
+      checkSnap(player);
+    }
+
+    function checkSnap(player) {
+      if (pile.length >= 2) {
+        const last = pile[pile.length-1];
+        const secondLast = pile[pile.length-2];
+        if (last === secondLast) {
+          snapText.style.display = "block";
+          setTimeout(() => snapText.style.display = "none", 3000);
+          if (player === 1) {
+            score1++;
+          } else {
+            score2++;
+          }
+          updateUI();
+        }
+      }
+    }
+
+    document.getElementById("play1").addEventListener("click", () => playCard(1));
+    document.getElementById("play2").addEventListener("click", () => playCard(2));
+    document.getElementById("restartBtn").addEventListener("click", initGame);
+
+    initGame();
+  </script>
+</body>
+</html>

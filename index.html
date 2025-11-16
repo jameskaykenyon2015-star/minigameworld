@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Emoji Game Hub</title>
+  <style>
+    /* Neon animated gradient background */
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(130deg,
+        #6a00f4 0%,
+        #ff006e 25%,
+        #00f5d4 50%,
+        #3a86ff 75%,
+        #ffbe0b 100%);
+      background-size: 300% 300%;
+      animation: neonShift 12s ease-in-out infinite;
+      color: #fff;
+    }
+    @keyframes neonShift {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+
+    .hub {
+      text-align: center;
+      padding: 40px;
+      background: rgba(255,255,255,0.08);
+      border-radius: 20px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 40px rgba(255,255,255,0.3);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      margin-bottom: 30px;
+      text-shadow: 0 0 20px rgba(255,255,255,0.6);
+    }
+
+    .game-links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .game-card {
+      display: inline-block;
+      padding: 20px 30px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: bold;
+      font-size: 1.2rem;
+      color: #fff;
+      background: linear-gradient(135deg, #6a00f4, #ff006e, #00f5d4, #3a86ff);
+      background-size: 300% 300%;
+      animation: cardGlow 8s ease infinite;
+      box-shadow: 0 0 20px rgba(255,255,255,0.4);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .game-card:hover {
+      transform: scale(1.08);
+      box-shadow: 0 0 30px rgba(255,255,255,0.7);
+    }
+
+    @keyframes cardGlow {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="hub">
+    <h1>✨ Emoji Game Hub ✨</h1>
+    <div class="game-links">
+      <a href="emoji-snap.html" class="game-card">🎯 Emoji Snap</a>
+      <a href="emoji-guess.html" class="game-card">🤔 Emoji Guess</a>
+    </div>
+  </div>
+</body>
+</html>

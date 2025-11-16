@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Emoji Word Guess</title>
+  <style>
+    :root{
+      --glass-bg: rgba(255,255,255,0.12);
+      --glass-border: rgba(255,255,255,0.25);
+      --text: #f9f9fb;
+      --accent: #00ffd0;
+      --danger: #ff3b5c;
+      --ok: #6eff7e;
+    }
+    /* Neon animated gradient background */
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(130deg,
+        #6a00f4 0%,
+        #ff006e 25%,
+        #00f5d4 50%,
+        #3a86ff 75%,
+        #ffbe0b 100%);
+      background-size: 300% 300%;
+      animation: glowShift 14s ease-in-out infinite;
+    }
+    @keyframes glowShift {
+      0% { background-position: 0% 50%; filter: saturate(1.2) contrast(1.05); }
+      50% { background-position: 100% 50%; filter: saturate(1.4) contrast(1.1); }
+      100% { background-position: 0% 50%; filter: saturate(1.2) contrast(1.05); }
+    }
+
+    /* Layout */
+    .wrap {
+      display: grid;
+      place-items: center;
+      min-height: 100vh;
+      padding: 24px;
+    }
+    .card {
+      width: min(720px, 92vw);
+      border-radius: 18px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      box-shadow:
+        0 20px 40px rgba(0,0,0,0.35),
+        inset 0 0 60px rgba(255,255,255,0.06);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding: 24px;
+    }
+
+    /* Header */
+    .top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .brand {
+      font-weight: 800;
+      letter-spacing: 0.4px;
+      font-size: 1.2rem;
+      text-shadow: 0 0 12px rgba(0,255,208,0.35);
+    }
+    .stats {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px dashed rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.08);
+      font-size: 0.95rem;
+    }
+    .pill b {
+      color: var(--accent);
+    }
+
+    /* Puzzle display */
+    .puzzle {
+      display: grid;
+      place-items: center;
+      padding: 26px 18px;
+      border-radius: 14px;
+      background: radial-gradient(1200px 500px at 50% 0%,
+        rgba(255,255,255,0.12), rgba(255,255,255,0.04));
+      border: 1px solid rgba(255,255,255,0.18);
+      margin-bottom: 18px;
+    }
+    .emoji-pair {
+      font-size: clamp(3rem, 10vw, 6rem);
+      line-height: 1;
+      text-shadow:
+        0 0 16px rgba(255,255,255,0.35),
+        0 0 36px rgba(0,255,208,0.25);
+      user-select: none;
+    }
+
+    /* Input and actions */
+    form {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-top: 6px;
+    }
+    input[type="text"] {
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.35);
+      background: rgba(255,255,255,0.12);
+      color: var(--text);
+      font-size: 1rem;
+      outline: none;
+      transition: box-shadow 0.2s ease;
+    }
+    input[type="text"]::placeholder {
+      color: rgba(255,255,255,0.7);
+    }
+    input[type="text"]:focus {
+      box-shadow: 0 0 0 3px rgba(0,255,208,0.35);
+    }
+    button {
+      padding: 14px 18px;
+      border-radius: 12px;
+      border: none;
+      color: #0e0f13;
+      background: linear-gradient(120deg, #00ffd0, #6eff7e);
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      cursor: pointer;
+      box-shadow: 0 12px 26px rgba(0,255,208,0.35);
+      transition: transform 0.06s ease, filter 0.2s ease;
+    }
+    button:hover { filter: brightness(1.08) saturate(1.12); }
+    button:active { transform: translateY(1px) scale(0.997); }
+
+    .row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-top: 14px;
+    }
+    .btn-secondary {
+      background: linear-gradient(120deg, #ff3b5c, #ffbe0b);
+      box-shadow: 0 12px 26px rgba(255,59,92,0.35);
+    }
+
+    /* Feedback */
+    .message {
+      margin-top: 10px;
+      min-height: 24px;
+      font-weight: 600;
+      letter-spacing: 0.3px;
+      text-shadow: 0 0 10px rgba(0,0,0,0.35);
+    }
+    .ok { color: var(--ok); }
+    .bad { color: var(--danger); }
+    .warn { color: #ffd166; }
+
+    /* Bonus round overlay */
+    .overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      place-items: center;
+      background: rgba(10,12,20,0.55);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      z-index: 30;
+    }
+    .overlay.show { display: grid; }
+    .bonus-card {
+      width: min(640px, 92vw);
+      border-radius: 18px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      box-shadow: 0 26px 50px rgba(0,0,0,0.45);
+      padding: 22px;
+      text-align: center;
+    }
+    .bonus-title {
+      font-weight: 800;
+      margin-bottom: 8px;
+    }
+    .bonus-sub {
+      opacity: 0.85;
+      margin-bottom: 14px;
+    }
+    .bonus-emoji {
+      font-size: clamp(2.6rem, 9vw, 5rem);
+      margin: 10px 0 14px 0;
+      text-shadow:
+        0 0 16px rgba(255,255,255,0.3),
+        0 0 36px rgba(58,134,255,0.25);
+    }
+    .bonus-actions {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px;
+      margin-top: 10px;
+    }
+
+    /* Footer note */
+    .note {
+      margin-top: 14px;
+      font-size: 0.9rem;
+      opacity: 0.85;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div class="top">
+        <div class="brand">Emoji Word Guess</div>
+        <div class="stats">
+          <div class="pill">Score: <b id="score">0</b></div>
+          <div class="pill">Streak: <b id="streak">0</b></div>
+          <div class="pill">Time: <b id="time">30</b>s</div>
+        </div>
+      </div>
+
+      <div class="puzzle" aria-live="polite">
+        <div id="emojiPair" class="emoji-pair">⭐ + 🐟</div>
+      </div>
+
+      <form id="guessForm" autocomplete="off">
+        <input id="answer" type="text" placeholder="Type the word these emojis make..." aria-label="Your answer"/>
+        <button type="submit">Submit</button>
+      </form>
+
+      <div class="row">
+        <button id="skip" class="btn-secondary" type="button">Skip (-2 sec)</button>
+        <button id="reset" class="btn-secondary" type="button">Reset game</button>
+        <button id="hint" class="btn-secondary" type="button">Hint</button>
+      </div>
+
+      <div id="message" class="message"></div>
+
+      <div class="note">
+        <b>How to play:</b> Guess the word made by the two emojis. Correct = +1 point. Wrong = score resets to 0. You have 30 seconds and hear a tick each second. If time runs out, you lose 2 points. Get 2 correct in a row to unlock a bonus round worth +2 points.
+      </div>
+    </div>
+  </div>
+
+  <!-- Bonus round overlay -->
+  <div id="overlay" class="overlay" role="dialog" aria-modal="true" aria-labelledby="bonusTitle">
+    <div class="bonus-card">
+      <div id="bonusTitle" class="bonus-title">Bonus Round!</div>
+      <div class="bonus-sub">Get this right to win <b>+2</b> points.</div>
+      <div id="bonusEmoji" class="bonus-emoji">📖 + 🐛</div>
+      <div class="bonus-actions">
+        <input id="bonusInput" type="text" placeholder="Your bonus answer..." aria-label="Bonus answer"/>
+        <button id="bonusSubmit" type="button">Claim +2</button>
+      </div>
+      <div id="bonusMsg" class="message" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
+  <script>
+    // Puzzles: two emojis -> one word (lowercase answers)
+    const PUZZLES = [
+      { e: "⭐ + 🐟", a: "starfish", hint: "Sea creature + shining thing" },
+      { e: "📖 + 🐛", a: "bookworm", hint: "Avid reader" },
+      { e: "❄️ + ⛄", a: "snowman", hint: "Winter buddy" },
+      { e: "🦶 + ⚽", a: "football", hint: "Sport played with feet" },
+      { e: "✉️ + 📦", a: "mailbox", hint: "Where letters go" },
+      { e: "☕ + 🍰", a: "cupcake", hint: "Sweet treat" },
+      { e: "🦷 + 🪥", a: "toothbrush", hint: "Bathroom essential" },
+      { e: "🌧️ + 🌈", a: "rainbow", hint: "Colors after rain" },
+      { e: "🧠 + ⚡", a: "brainstorm", hint: "Idea blast" },
+      { e: "🐶 + 🏠", a: "doghouse", hint: "Pet shelter" },
+      { e: "🔥 + 🚒", a: "firetruck", hint: "Emergency vehicle" },
+      { e: "🌙 + 🌊", a: "moonwave", hint: "Poetic mash-up" }, // fun wildcard
+      { e: "🍀 + 🌟", a: "luckystar", hint: "Fortunate luminary" },
+    ];
+
+    const BONUS_PUZZLES = [
+      { e: "🧊 + 🧋", a: "icebubble", hint: "Chilled boba vibe" },
+      { e: "🕰️ + 🧥", a: "timecoat", hint: "Pun-ny layer" },
+      { e: "🌍 + 🔧", a: "earthwork", hint: "Ground job" },
+      { e: "🎵 + 📦", a: "musicbox", hint: "Melody in a case" },
+    ];
+
+    // Game state
+    let score = 0;
+    let streak = 0;
+    let timeLeft = 30;
+    let timerId = null;
+    let currentIndex = -1;
+    let isBonus = false;
+
+    // Elements
+    const scoreEl = document.getElementById('score');
+    const streakEl = document.getElementById('streak');
+    const timeEl = document.getElementById('time');
+    const emojiEl = document.getElementById('emojiPair');
+    const messageEl = document.getElementById('message');
+    const formEl = document.getElementById('guessForm');
+    const inputEl = document.getElementById('answer');
+    const skipBtn = document.getElementById('skip');
+    const resetBtn = document.getElementById('reset');
+    const hintBtn = document.getElementById('hint');
+
+    const overlay = document.getElementById('overlay');
+    const bonusEmojiEl = document.getElementById('bonusEmoji');
+    const bonusInputEl = document.getElementById('bonusInput');
+    const bonusSubmitBtn = document.getElementById('bonusSubmit');
+    const bonusMsgEl = document.getElementById('bonusMsg');
+
+    // WebAudio ticking per second
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function tick() {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.type = 'square';
+      // High click-ish tone
+      o.frequency.value = 1500;
+      g.gain.value = 0.02; // subtle
+      o.connect(g);
+      g.connect(audioCtx.destination);
+      o.start();
+      setTimeout(() => { o.stop(); }, 40); // short tick
+    }
+
+    function updateUI() {
+      scoreEl.textContent = score;
+      streakEl.textContent = streak;
+      timeEl.textContent = timeLeft;
+    }
+
+    function setMessage(text, cls = '') {
+      messageEl.className = 'message ' + (cls || '');
+      messageEl.textContent = text || '';
+    }
+
+    function randomIndex(listLen, exclude = -1) {
+      if (listLen <= 1) return 0;
+      let i = Math.floor(Math.random() * listLen);
+      // avoid repeating the same puzzle immediately
+      if (i === exclude) i = (i + 1) % listLen;
+      return i;
+    }
+
+    function startTimer() {
+      clearInterval(timerId);
+      timeLeft = 30;
+      updateUI();
+      // Start ticking immediately so the first second is heard
+      tick();
+      timerId = setInterval(() => {
+        timeLeft--;
+        updateUI();
+        tick();
+        if (timeLeft <= 0) {
+          clearInterval(timerId);
+          handleTimeout();
+        }
+      }, 1000);
+    }
+
+    function nextPuzzle() {
+      isBonus = false;
+      currentIndex = randomIndex(PUZZLES.length, currentIndex);
+      emojiEl.textContent = PUZZLES[currentIndex].e;
+      setMessage('');
+      inputEl.value = '';
+      inputEl.focus();
+      startTimer();
+    }
+
+    function openBonus() {
+      isBonus = true;
+      // pick bonus puzzle
+      const idx = Math.floor(Math.random() * BONUS_PUZZLES.length);
+      const p = BONUS_PUZZLES[idx];
+      bonusEmojiEl.textContent = p.e;
+      bonusInputEl.value = '';
+      bonusMsgEl.textContent = '';
+      overlay.classList.add('show');
+      bonusInputEl.focus();
+      // same timer applies
+      clearInterval(timerId);
+      timeLeft = 30;
+      updateUI();
+      tick();
+      timerId = setInterval(() => {
+        timeLeft--;
+        updateUI();
+        tick();
+        if (timeLeft <= 0) {
+          clearInterval(timerId);
+          // timeout in bonus: -2 points and streak reset
+          score = Math.max(0, score - 2);
+          streak = 0;
+          bonusMsgEl.className = 'message bad';
+          bonusMsgEl.textContent = 'Time’s up! -2 points.';
+          // close after a short pause
+          setTimeout(() => {
+            overlay.classList.remove('show');
+            nextPuzzle();
+          }, 900);
+        }
+      }, 1000);
+
+      // attach handler
+      bonusSubmitBtn.onclick = () => {
+        const ans = bonusInputEl.value.trim().toLowerCase();
+        if (!ans) {
+          bonusMsgEl.className = 'message warn';
+          bonusMsgEl.textContent = 'Type your answer.';
+          return;
+        }
+        const isCorrect = ans === p.a;
+        clearInterval(timerId);
+        if (isCorrect) {
+          score += 2;
+          streak = 0; // streak resets after bonus is claimed
+          updateUI();
+          bonusMsgEl.className = 'message ok';
+          bonusMsgEl.textContent = 'Bonus correct! +2 points.';
+        } else {
+          score = 0;
+          streak = 0;
+          updateUI();
+          bonusMsgEl.className = 'message bad';
+          bonusMsgEl.textContent = 'Bonus wrong! Score reset to 0.';
+        }
+        setTimeout(() => {
+          overlay.classList.remove('show');
+          nextPuzzle();
+        }, 900);
+      };
+    }
+
+    function handleTimeout() {
+      // -2 points, not below 0
+      score = Math.max(0, score - 2);
+      streak = 0;
+      updateUI();
+      setMessage('Time’s up! -2 points.', 'bad');
+      // move to next puzzle after a brief pause
+      setTimeout(nextPuzzle, 900);
+    }
+
+    function submitAnswer(ans) {
+      const target = PUZZLES[currentIndex].a;
+      const correct = ans === target;
+      clearInterval(timerId);
+
+      if (correct) {
+        score += 1;
+        streak += 1;
+        updateUI();
+        setMessage('Correct! +1 point.', 'ok');
+
+        // Bonus trigger: 2 correct in a row
+        if (streak >= 2) {
+          setTimeout(openBonus, 650);
+        } else {
+          setTimeout(nextPuzzle, 750);
+        }
+      } else {
+        // wrong answer resets score
+        score = 0;
+        streak = 0;
+        updateUI();
+        setMessage(`Wrong! The word was "${target}". Score reset.`, 'bad');
+        setTimeout(nextPuzzle, 1100);
+      }
+    }
+
+    // Form events
+    formEl.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const val = inputEl.value.trim().toLowerCase();
+      if (!val) {
+        setMessage('Please type an answer.', 'warn');
+        return;
+      }
+      submitAnswer(val);
+    });
+
+    // Skip: shave 2 seconds and change puzzle
+    skipBtn.addEventListener('click', () => {
+      timeLeft = Math.max(0, timeLeft - 2);
+      setMessage('Skipped! -2 seconds.', 'warn');
+      nextPuzzle();
+    });
+
+    // Reset game
+    resetBtn.addEventListener('click', () => {
+      clearInterval(timerId);
+      score = 0;
+      streak = 0;
+      timeLeft = 30;
+      updateUI();
+      setMessage('Game reset.', 'warn');
+      nextPuzzle();
+    });
+
+    // Hint
+    hintBtn.addEventListener('click', () => {
+      const hint = PUZZLES[currentIndex]?.hint || 'Trust your gut!';
+      setMessage('Hint: ' + hint, 'warn');
+      // small time penalty for hint
+      timeLeft = Math.max(0, timeLeft - 3);
+      updateUI();
+    });
+
+    // Kick off
+    window.addEventListener('load', () => {
+      nextPuzzle();
+    });
+
+    // Accessibility: Enter key on bonus input triggers submit
+    bonusInputEl?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        bonusSubmitBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
