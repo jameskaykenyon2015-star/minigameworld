@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Neon Runner 2D</title>
+<style>
+  body { margin:0; background:black; overflow:hidden; font-family:Arial, sans-serif; }
+  canvas { display:block; margin:0 auto; background:black; }
+  #joystick {
+    position:fixed; bottom:20px; left:20px;
+    width:120px; height:120px; border-radius:50%;
+    background:rgba(255,255,255,0.08);
+    border:2px solid rgba(255,255,255,0.25);
+    touch-action:none; pointer-events:auto; z-index:10;
+  }
+  #thumb {
+    position:absolute; left:50%; top:50%;
+    width:50px; height:50px; border-radius:50%;
+    background:radial-gradient(circle,#ff2fbf,#2fd9ff);
+    transform:translate(-50%,-50%);
+    box-shadow:0 0 12px #ff2fbf,0 0 20px #2fd9ff;
+  }
+  #overlay {
+    position:fixed; inset:0;
+    background:rgba(0,0,0,0.85);
+    display:none; flex-direction:column; align-items:center; justify-content:center;
+    color:#fff; font-family:Arial, sans-serif; z-index:999;
+    text-shadow:0 0 12px #ff2fbf,0 0 20px #2fd9ff;
+  }
+  #overlay h1 {
+    font-size:40px; margin:0 0 20px 0;
+  }
+  #restartBtn {
+    font-size:20px; padding:10px 20px;
+    background:#2fd9ff; border:none; border-radius:8px;
+    color:#000; font-weight:bold; cursor:pointer;
+    box-shadow:0 0 12px #2fd9ff,0 0 20px #ff2fbf;
+  }
+</style>
+</head>
+<body>
+<canvas id="game" width="400" height="600"></canvas>
+<div id="joystick"><div id="thumb"></div></div>
+<div id="overlay">
+  <h1>GAME OVER</h1>
+  <button id="restartBtn">Restart</button>
+</div>
+
+<script>
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+
+let player, obstacles, orbs, score, gameOver;
+function init(){
+  player = { x:200, y:500, w:20, h:20, color:"red" };
+  obstacles = []; orbs = [];
+  score = 0; gameOver = false;
+}
+init();
+
+// Joystick
+const joystick=document.getElementById("joystick"), thumb=document.getElementById("thumb");
+let dragging=false,inputX=0;
+function clamp(n,min,max){return Math.max(min,Math.min(max,n));}
+function localPos(e,el){const r=el.getBoundingClientRect();const cx=e.touches?e.touches[0].clientX:e.clientX;return {x:cx-r.left,w:r.width};}
+function startDrag(e){dragging=true;moveDrag(e);e.preventDefault();}
+function moveDrag(e){if(!dragging)return;const {x,w}=localPos(e,joystick);const cx=w/2;const dx=x-cx;const radius=w*0.36;const mag=Math.abs(dx);const scale=mag>radius?radius/mag:1;const nx=dx*scale;thumb.style.left=((cx+nx)/w*100)+"%";thumb.style.top="50%";inputX=clamp(nx/radius,-1,1);}
+function endDrag(){dragging=false;inputX=0;thumb.style.left="50%";thumb.style.top="50%";}
+joystick.addEventListener("touchstart",startDrag,{passive:false});
+joystick.addEventListener("touchmove",moveDrag,{passive:false});
+joystick.addEventListener("touchend",endDrag);
+joystick.addEventListener("mousedown",startDrag);
+window.addEventListener("mousemove",moveDrag);
+window.addEventListener("mouseup",endDrag);
+
+// Keyboard fallback
+window.addEventListener("keydown", e=>{
+  if(e.code==="ArrowLeft") inputX=-1;
+  if(e.code==="ArrowRight") inputX=1;
+  if(e.code==="Space" && !gameOver) player.y-=50;
+});
+window.addEventListener("keyup", ()=> inputX=0);
+
+// Spawn
+function spawn(){
+  if(Math.random()<0.05) obstacles.push({x:Math.random()*360,y:-20,w:40,h:20,color:"yellow"});
+  if(Math.random()<0.03) orbs.push({x:Math.random()*360,y:-20,w:15,h:15,color:"cyan"});
+}
+function update(){
+  if(gameOver) return;
+  player.x += inputX*5;
+  player.x = clamp(player.x,0,canvas.width-player.w);
+  player.y = Math.min(500, player.y+2);
+
+  obstacles.forEach(o=>o.y+=3);
+  orbs.forEach(o=>o.y+=3);
+
+  obstacles.forEach(o=>{
+    if(player.x<o.x+o.w && player.x+player.w>o.x && player.y<o.y+o.h && player.y+player.h>o.y){
+      gameOver=true; document.getElementById("overlay").style.display="flex";
+    }
+  });
+  orbs.forEach((o,i)=>{
+    if(player.x<o.x+o.w && player.x+player.w>o.x && player.y<o.y+o.h && player.y+player.h>o.y){
+      score++; orbs.splice(i,1);
+    }
+  });
+
+  obstacles = obstacles.filter(o=>o.y<canvas.height);
+  orbs = orbs.filter(o=>o.y<canvas.height);
+}
+function draw(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+
+  // Neon background glow
+  ctx.fillStyle="black";
+  ctx.shadowBlur=40;
+  ctx.shadowColor="magenta";
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+
+  // Track (plain blue, no glow)
+  ctx.strokeStyle="blue"; ctx.lineWidth=4; ctx.shadowBlur=0;
+  ctx.strokeRect(50,0,300,600);
+
+  // Player (neon)
+  ctx.fillStyle=player.color; ctx.shadowBlur=20; ctx.shadowColor=player.color;
+  ctx.fillRect(player.x,player.y,player.w,player.h);
+
+  // Obstacles (neon)
+  obstacles.forEach(o=>{
+    ctx.fillStyle=o.color; ctx.shadowBlur=20; ctx.shadowColor=o.color;
+    ctx.fillRect(o.x,o.y,o.w,o.h);
+  });
+
+  // Orbs (neon)
+  orbs.forEach(o=>{
+    ctx.fillStyle=o.color; ctx.shadowBlur=20; ctx.shadowColor=o.color;
+    ctx.beginPath(); ctx.arc(o.x,o.y,o.w/2,0,Math.PI*2); ctx.fill();
+  });
+
+  // Score (neon white)
+  ctx.fillStyle="white"; ctx.shadowBlur=15; ctx.shadowColor="white";
+  ctx.font="20px Arial"; ctx.fillText("Score: "+score,10,20);
+}
+function loop(){spawn();update();draw();requestAnimationFrame(loop);}
+loop();
+
+// Restart button
+document.getElementById("restartBtn").addEventListener("click",()=>{
+  init();
+  document.getElementById("overlay").style.display="none";
+});
+</script>
+</body>
+</html>
