@@ -1,90 +1,64 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Emoji Game Hub</title>
-  <style>
-    /* Neon animated gradient background */
-    body {
-      margin: 0;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: linear-gradient(130deg,
-        #6a00f4 0%,
-        #ff006e 25%,
-        #00f5d4 50%,
-        #3a86ff 75%,
-        #ffbe0b 100%);
-      background-size: 300% 300%;
-      animation: neonShift 12s ease-in-out infinite;
-      color: #fff;
-    }
-    @keyframes neonShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-
-    .hub {
-      text-align: center;
-      padding: 40px;
-      background: rgba(255,255,255,0.08);
-      border-radius: 20px;
-      backdrop-filter: blur(10px);
-      box-shadow: 0 0 40px rgba(255,255,255,0.3);
-    }
-
-    h1 {
-      font-size: 2.5rem;
-      margin-bottom: 30px;
-      text-shadow: 0 0 20px rgba(255,255,255,0.6);
-    }
-
-    .game-links {
-      display: flex;
-      gap: 20px;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .game-card {
-      display: inline-block;
-      padding: 20px 30px;
-      border-radius: 12px;
-      text-decoration: none;
-      font-weight: bold;
-      font-size: 1.2rem;
-      color: #fff;
-      background: linear-gradient(135deg, #6a00f4, #ff006e, #00f5d4, #3a86ff);
-      background-size: 300% 300%;
-      animation: cardGlow 8s ease infinite;
-      box-shadow: 0 0 20px rgba(255,255,255,0.4);
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-
-    .game-card:hover {
-      transform: scale(1.08);
-      box-shadow: 0 0 30px rgba(255,255,255,0.7);
-    }
-
-    @keyframes cardGlow {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-  </style>
+<meta charset="UTF-8">
+<title>Game Hub</title>
+<style>
+  body {
+    margin: 0;
+    background: black;
+    font-family: Arial, sans-serif;
+    color: white;
+    text-align: center;
+  }
+  h1 {
+    margin-top: 20px;
+    text-shadow: 0 0 12px #ff2fbf, 0 0 20px #2fd9ff;
+  }
+  .game-card {
+    display: inline-block;
+    margin: 20px;
+    padding: 20px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.05);
+    box-shadow: 0 0 12px #ff2fbf, 0 0 20px #2fd9ff;
+    transition: transform 0.2s;
+    width: 220px;
+  }
+  .game-card:hover {
+    transform: scale(1.05);
+  }
+  a {
+    text-decoration: none;
+    color: #2fd9ff;
+    font-weight: bold;
+    font-size: 18px;
+    text-shadow: 0 0 8px #ff2fbf;
+  }
+</style>
 </head>
 <body>
-  <div class="hub">
-    <h1>✨ Emoji Game Hub ✨</h1>
-    <div class="game-links">
-      <a href="emoji-snap.html" class="game-card">🎯 Emoji Snap</a>
-      <a href="emoji-guess.html" class="game-card">🤔 Emoji Guess</a>
-    </div>
+  <h1>🎮 James' Neon Game Hub</h1>
+
+  <!-- Neon Runner -->
+  <div class="game-card">
+    <h2>Neon Runner</h2>
+    <p>A fast-paced neon arcade runner.</p>
+    <a href="neon.html">Play Now</a>
+  </div>
+
+  <!-- Emoji Snap -->
+  <div class="game-card">
+    <h2>Emoji Snap</h2>
+    <p>Test your reflexes with emojis.</p>
+    <a href="emoji-snap.html">Play Now</a>
+  </div>
+
+  <!-- Emoji Guess -->
+  <div class="game-card">
+    <h2>Emoji Guess</h2>
+    <p>Guess the word from emojis.</p>
+    <a href="emoji-guess.html">Play Now</a>
   </div>
 </body>
 </html>
